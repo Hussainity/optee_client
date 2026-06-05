@@ -923,6 +923,25 @@ CK_RV serialize_ck_mecha_params(struct serializer *obj,
 		return serialize_mecha_mac_general_param(obj, &mecha);
 	case CKM_RSA_AES_KEY_WRAP:
 		return serialize_mecha_rsa_aes_key_wrap(obj, &mecha);
+	case CKM_XOR_BASE_AND_KEY:
+		rv = serialize_32b(obj, obj->type);
+		if (rv)
+			return rv;
+
+		/* Serialize size of parameter data (not the length itself) */
+		rv = serialize_32b(obj, mecha.ulParameterLen);
+		if (rv)
+			return rv;
+
+		/* Serialize parameter data directly if present */
+		if (mecha.ulParameterLen && mecha.pParameter) {
+			rv = serialize_buffer(obj, mecha.pParameter,
+							mecha.ulParameterLen);
+			if (rv)
+				return rv;
+		}
+
+		return CKR_OK;
 
 	default:
 		return CKR_MECHANISM_INVALID;
